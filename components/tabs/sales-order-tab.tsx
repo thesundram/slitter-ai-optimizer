@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Upload, Plus, Trash2, FileText, Pencil } from "lucide-react"
+import { Upload, Plus, Trash2, FileText, Pencil, Info } from "lucide-react"
 import { useSlitter, type SalesOrder } from "@/lib/slitter-context"
 
 export function SalesOrderTab() {
@@ -31,6 +31,7 @@ export function SalesOrderTab() {
     type: "HR",
     priority: "Medium",
     widthTolerance: 2,
+    noOfSlit: 1,
   })
 
   const handleFileUpload = useCallback(
@@ -53,7 +54,9 @@ export function SalesOrderTab() {
               type: (values[headers.indexOf("type")]?.toUpperCase() as "HR" | "CR") || "HR",
               requiredWidth:
                 Number.parseFloat(
-                  values[headers.indexOf("required width")] ||
+                  values[headers.indexOf("required slit width")] ||
+                    values[headers.indexOf("required slit width(mm)")] ||
+                    values[headers.indexOf("required width")] ||
                     values[headers.indexOf("width")] ||
                     values[headers.indexOf("required width(mm)")],
                 ) || 0,
@@ -71,6 +74,8 @@ export function SalesOrderTab() {
               widthTolerance:
                 Number.parseFloat(values[headers.indexOf("tolerance")] || values[headers.indexOf("width tolerance")]) ||
                 2,
+              noOfSlit:
+                Number.parseInt(values[headers.indexOf("no of slit")] || values[headers.indexOf("noofslit")]) || 1,
             }
           })
 
@@ -99,10 +104,11 @@ export function SalesOrderTab() {
       priority: newOrder.priority || "Medium",
       dueDate: newOrder.dueDate || new Date().toISOString().split("T")[0],
       widthTolerance: newOrder.widthTolerance || 2,
+      noOfSlit: newOrder.noOfSlit || 1,
     }
 
     setOrders([...orders, order])
-    setNewOrder({ type: "HR", priority: "Medium", widthTolerance: 2 })
+    setNewOrder({ type: "HR", priority: "Medium", widthTolerance: 2, noOfSlit: 1 })
     setIsDialogOpen(false)
   }
 
@@ -201,7 +207,7 @@ export function SalesOrderTab() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="orderThickness">Thickness (MM)</Label>
+                    <Label htmlFor="orderThickness">Thickness (mm)</Label>
                     <Input
                       id="orderThickness"
                       type="number"
@@ -218,7 +224,7 @@ export function SalesOrderTab() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="requiredWidth">Required Width (MM)</Label>
+                    <Label htmlFor="requiredWidth">Required Slit Width (mm)</Label>
                     <Input
                       id="requiredWidth"
                       type="number"
@@ -252,6 +258,21 @@ export function SalesOrderTab() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="noOfSlit">No of Slit</Label>
+                    <Input
+                      id="noOfSlit"
+                      type="number"
+                      min="1"
+                      value={
+                        newOrder.noOfSlit === undefined || newOrder.noOfSlit === 0 ? "" : String(newOrder.noOfSlit)
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setNewOrder({ ...newOrder, noOfSlit: val === "" ? undefined : Number.parseInt(val) || 1 })
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
                     <Select
                       value={newOrder.priority}
@@ -269,6 +290,8 @@ export function SalesOrderTab() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dueDate">Due Date</Label>
                     <Input
@@ -278,23 +301,26 @@ export function SalesOrderTab() {
                       onChange={(e) => setNewOrder({ ...newOrder, dueDate: e.target.value })}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tolerance">Width Tolerance (MM)</Label>
-                  <Input
-                    id="tolerance"
-                    type="number"
-                    step="0.5"
-                    value={
-                      newOrder.widthTolerance === undefined || newOrder.widthTolerance === 0
-                        ? ""
-                        : String(newOrder.widthTolerance)
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setNewOrder({ ...newOrder, widthTolerance: val === "" ? undefined : Number.parseFloat(val) || 0 })
-                    }}
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="tolerance">Width Tolerance (mm)</Label>
+                    <Input
+                      id="tolerance"
+                      type="number"
+                      step="0.5"
+                      value={
+                        newOrder.widthTolerance === undefined || newOrder.widthTolerance === 0
+                          ? ""
+                          : String(newOrder.widthTolerance)
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setNewOrder({
+                          ...newOrder,
+                          widthTolerance: val === "" ? undefined : Number.parseFloat(val) || 0,
+                        })
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -307,6 +333,36 @@ export function SalesOrderTab() {
           </Dialog>
         </div>
       </div>
+
+      <Card className="border-amber-200 bg-amber-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg text-amber-800">
+            <Info className="h-5 w-5" />
+            CSV File Format
+          </CardTitle>
+          <CardDescription className="text-amber-700">
+            Upload CSV with the following columns (header row required)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md bg-white p-3 font-mono text-sm">
+            <p className="font-semibold text-amber-900">Required Columns:</p>
+            <p className="text-gray-700">
+              Order ID, Type, Grade, Thickness(mm), Required Slit Width(mm), Weight(MT), No of Slit
+            </p>
+            <p className="mt-2 font-semibold text-amber-900">Optional Columns:</p>
+            <p className="text-gray-700">Priority, Due Date, Tolerance</p>
+            <p className="mt-3 font-semibold text-amber-900">Example:</p>
+            <code className="block mt-1 text-xs text-gray-600 bg-gray-100 p-2 rounded overflow-x-auto">
+              Order ID,Type,Grade,Thickness(mm),Required Slit Width(mm),Weight(MT),No of Slit,Priority,Due Date
+              <br />
+              ORD-2024-001,HR,SS304,2.5,150,5.0,3,High,2024-02-15
+              <br />
+              ORD-2024-002,CR,SS316,1.2,200,3.5,2,Medium,2024-02-20
+            </code>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -331,7 +387,7 @@ export function SalesOrderTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Avg Width (MM)</CardDescription>
+            <CardDescription>Avg Slit Width (mm)</CardDescription>
             <CardTitle className="text-3xl">
               {orders.length > 0 ? Math.round(orders.reduce((sum, o) => sum + o.requiredWidth, 0) / orders.length) : 0}
             </CardTitle>
@@ -362,8 +418,9 @@ export function SalesOrderTab() {
                     <TableHead>Type</TableHead>
                     <TableHead>Grade</TableHead>
                     <TableHead>Thickness</TableHead>
-                    <TableHead>Width (MM)</TableHead>
+                    <TableHead>Slit Width (mm)</TableHead>
                     <TableHead>Weight (MT)</TableHead>
+                    <TableHead>No of Slit</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
@@ -380,6 +437,7 @@ export function SalesOrderTab() {
                       <TableCell>{order.thickness}</TableCell>
                       <TableCell>{order.requiredWidth}</TableCell>
                       <TableCell>{order.weight}</TableCell>
+                      <TableCell>{order.noOfSlit || 1}</TableCell>
                       <TableCell>
                         <Badge variant={getPriorityColor(order.priority) as "default" | "secondary" | "destructive"}>
                           {order.priority}
@@ -405,6 +463,7 @@ export function SalesOrderTab() {
         </CardContent>
       </Card>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -448,7 +507,7 @@ export function SalesOrderTab() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="editOrderThickness">Thickness (MM)</Label>
+                  <Label htmlFor="editOrderThickness">Thickness (mm)</Label>
                   <Input
                     id="editOrderThickness"
                     type="number"
@@ -465,7 +524,7 @@ export function SalesOrderTab() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="editRequiredWidth">Required Width (MM)</Label>
+                  <Label htmlFor="editRequiredWidth">Required Slit Width (mm)</Label>
                   <Input
                     id="editRequiredWidth"
                     type="number"
@@ -496,6 +555,21 @@ export function SalesOrderTab() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="editNoOfSlit">No of Slit</Label>
+                  <Input
+                    id="editNoOfSlit"
+                    type="number"
+                    min="1"
+                    value={(editingOrder.noOfSlit || 1) === 0 ? "" : (editingOrder.noOfSlit || 1).toString()}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        noOfSlit: e.target.value === "" ? 1 : Number.parseInt(e.target.value) || 1,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="editPriority">Priority</Label>
                   <Select
                     value={editingOrder.priority}
@@ -513,6 +587,8 @@ export function SalesOrderTab() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="editDueDate">Due Date</Label>
                   <Input
@@ -522,21 +598,21 @@ export function SalesOrderTab() {
                     onChange={(e) => setEditingOrder({ ...editingOrder, dueDate: e.target.value })}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editTolerance">Width Tolerance (MM)</Label>
-                <Input
-                  id="editTolerance"
-                  type="number"
-                  step="0.5"
-                  value={editingOrder.widthTolerance === 0 ? "" : editingOrder.widthTolerance.toString()}
-                  onChange={(e) =>
-                    setEditingOrder({
-                      ...editingOrder,
-                      widthTolerance: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
-                    })
-                  }
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="editTolerance">Width Tolerance (mm)</Label>
+                  <Input
+                    id="editTolerance"
+                    type="number"
+                    step="0.5"
+                    value={editingOrder.widthTolerance === 0 ? "" : editingOrder.widthTolerance.toString()}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        widthTolerance: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
           )}
