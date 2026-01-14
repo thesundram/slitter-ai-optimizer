@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Scissors, Package, FileText, Settings, Cpu, TrendingUp } from "lucide-react"
 
@@ -10,12 +9,6 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, setActiveTab }: HeaderProps) {
-  const [currentDate, setCurrentDate] = useState('')
-
-  useEffect(() => {
-    setCurrentDate(new Date().toLocaleDateString())
-  }, [])
-
   return (
     <header className="border-b border-border bg-card">
       <div className="container mx-auto px-4">
@@ -25,14 +18,14 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
               <Scissors className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">Slitter Optimization</h1>
+              <h1 className="text-2xl font-bold text-foreground">Slitter Optimization (AI Base)</h1>
               <p className="text-xs text-muted-foreground">Steel Industries Production Planning</p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>Shift: Day</span>
             <span className="h-4 w-px bg-border" />
-            <span>Date: {currentDate}</span>
+            <span>Date: {new Date().toLocaleDateString()}</span>
           </div>
         </div>
 
