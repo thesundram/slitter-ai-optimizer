@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Upload, Plus, Trash2, Package } from "lucide-react"
+import { Upload, Plus, Trash2, Package, Info } from "lucide-react"
 import { useSlitter, type RMCoil } from "@/lib/slitter-context"
 
 export function RMCoilTab() {
@@ -239,6 +239,34 @@ export function RMCoilTab() {
           </Dialog>
         </div>
       </div>
+
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg text-blue-800">
+            <Info className="h-5 w-5" />
+            CSV File Format
+          </CardTitle>
+          <CardDescription className="text-blue-700">
+            Upload CSV with the following columns (header row required)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md bg-white p-3 font-mono text-sm">
+            <p className="font-semibold text-blue-900">Required Columns:</p>
+            <p className="text-gray-700">Coil ID, Type, Grade, Thickness(mm), Width(mm), Weight(MT)</p>
+            <p className="mt-2 font-semibold text-blue-900">Optional Columns:</p>
+            <p className="text-gray-700">Inner Diameter, Outer Diameter</p>
+            <p className="mt-3 font-semibold text-blue-900">Example:</p>
+            <code className="block mt-1 text-xs text-gray-600 bg-gray-100 p-2 rounded overflow-x-auto">
+              Coil ID,Type,Grade,Thickness(mm),Width(mm),Weight(MT)
+              <br />
+              HR-2024-001,HR,SS304,2.5,1200,12.5
+              <br />
+              CR-2024-002,CR,SS316,1.2,1000,8.3
+            </code>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
