@@ -243,7 +243,7 @@ export function OptimizerTab() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <CoilSlittingVisualization patterns={optimizationResult.patterns} coils={coils} />
-            <YieldScrapChart patterns={optimizationResult.patterns} />
+            <YieldScrapChart patterns={optimizationResult.patterns} coils={coils} />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
