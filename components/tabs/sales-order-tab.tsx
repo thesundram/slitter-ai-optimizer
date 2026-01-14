@@ -19,12 +19,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Upload, Plus, Trash2, FileText } from "lucide-react"
+import { Upload, Plus, Trash2, FileText, Pencil } from "lucide-react"
 import { useSlitter, type SalesOrder } from "@/lib/slitter-context"
 
 export function SalesOrderTab() {
   const { orders, setOrders } = useSlitter()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<SalesOrder | null>(null)
   const [newOrder, setNewOrder] = useState<Partial<SalesOrder>>({
     type: "HR",
     priority: "Medium",
@@ -102,6 +104,19 @@ export function SalesOrderTab() {
     setOrders([...orders, order])
     setNewOrder({ type: "HR", priority: "Medium", widthTolerance: 2 })
     setIsDialogOpen(false)
+  }
+
+  const handleEditOrder = (order: SalesOrder) => {
+    setEditingOrder({ ...order })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveEdit = () => {
+    if (!editingOrder) return
+
+    setOrders(orders.map((o) => (o.id === editingOrder.id ? editingOrder : o)))
+    setEditingOrder(null)
+    setIsEditDialogOpen(false)
   }
 
   const handleDeleteOrder = (id: string) => {
@@ -191,8 +206,13 @@ export function SalesOrderTab() {
                       id="orderThickness"
                       type="number"
                       step="0.1"
-                      value={newOrder.thickness || ""}
-                      onChange={(e) => setNewOrder({ ...newOrder, thickness: Number.parseFloat(e.target.value) })}
+                      value={
+                        newOrder.thickness === undefined || newOrder.thickness === 0 ? "" : String(newOrder.thickness)
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setNewOrder({ ...newOrder, thickness: val === "" ? undefined : Number.parseFloat(val) || 0 })
+                      }}
                     />
                   </div>
                 </div>
@@ -202,8 +222,18 @@ export function SalesOrderTab() {
                     <Input
                       id="requiredWidth"
                       type="number"
-                      value={newOrder.requiredWidth || ""}
-                      onChange={(e) => setNewOrder({ ...newOrder, requiredWidth: Number.parseFloat(e.target.value) })}
+                      value={
+                        newOrder.requiredWidth === undefined || newOrder.requiredWidth === 0
+                          ? ""
+                          : String(newOrder.requiredWidth)
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setNewOrder({
+                          ...newOrder,
+                          requiredWidth: val === "" ? undefined : Number.parseFloat(val) || 0,
+                        })
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -212,8 +242,11 @@ export function SalesOrderTab() {
                       id="orderWeight"
                       type="number"
                       step="0.01"
-                      value={newOrder.weight || ""}
-                      onChange={(e) => setNewOrder({ ...newOrder, weight: Number.parseFloat(e.target.value) })}
+                      value={newOrder.weight === undefined || newOrder.weight === 0 ? "" : String(newOrder.weight)}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setNewOrder({ ...newOrder, weight: val === "" ? undefined : Number.parseFloat(val) || 0 })
+                      }}
                     />
                   </div>
                 </div>
@@ -252,8 +285,15 @@ export function SalesOrderTab() {
                     id="tolerance"
                     type="number"
                     step="0.5"
-                    value={newOrder.widthTolerance || ""}
-                    onChange={(e) => setNewOrder({ ...newOrder, widthTolerance: Number.parseFloat(e.target.value) })}
+                    value={
+                      newOrder.widthTolerance === undefined || newOrder.widthTolerance === 0
+                        ? ""
+                        : String(newOrder.widthTolerance)
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setNewOrder({ ...newOrder, widthTolerance: val === "" ? undefined : Number.parseFloat(val) || 0 })
+                    }}
                   />
                 </div>
               </div>
@@ -326,7 +366,7 @@ export function SalesOrderTab() {
                     <TableHead>Weight (MT)</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Due Date</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -347,9 +387,14 @@ export function SalesOrderTab() {
                       </TableCell>
                       <TableCell>{order.dueDate}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteOrder(order.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditOrder(order)}>
+                            <Pencil className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteOrder(order.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -359,6 +404,150 @@ export function SalesOrderTab() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Order</DialogTitle>
+            <DialogDescription>Update the order details below</DialogDescription>
+          </DialogHeader>
+          {editingOrder && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editOrderId">Order ID</Label>
+                  <Input
+                    id="editOrderId"
+                    value={editingOrder.orderId}
+                    onChange={(e) => setEditingOrder({ ...editingOrder, orderId: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editOrderType">Type</Label>
+                  <Select
+                    value={editingOrder.type}
+                    onValueChange={(value: "HR" | "CR") => setEditingOrder({ ...editingOrder, type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HR">HR (Hot Rolled)</SelectItem>
+                      <SelectItem value="CR">CR (Cold Rolled)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editOrderGrade">Grade</Label>
+                  <Input
+                    id="editOrderGrade"
+                    value={editingOrder.grade}
+                    onChange={(e) => setEditingOrder({ ...editingOrder, grade: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editOrderThickness">Thickness (MM)</Label>
+                  <Input
+                    id="editOrderThickness"
+                    type="number"
+                    step="0.1"
+                    value={editingOrder.thickness === 0 ? "" : editingOrder.thickness.toString()}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        thickness: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editRequiredWidth">Required Width (MM)</Label>
+                  <Input
+                    id="editRequiredWidth"
+                    type="number"
+                    value={editingOrder.requiredWidth === 0 ? "" : editingOrder.requiredWidth.toString()}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        requiredWidth: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editOrderWeight">Weight (MT)</Label>
+                  <Input
+                    id="editOrderWeight"
+                    type="number"
+                    step="0.01"
+                    value={editingOrder.weight === 0 ? "" : editingOrder.weight.toString()}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        weight: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editPriority">Priority</Label>
+                  <Select
+                    value={editingOrder.priority}
+                    onValueChange={(value: "High" | "Medium" | "Low") =>
+                      setEditingOrder({ ...editingOrder, priority: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editDueDate">Due Date</Label>
+                  <Input
+                    id="editDueDate"
+                    type="date"
+                    value={editingOrder.dueDate}
+                    onChange={(e) => setEditingOrder({ ...editingOrder, dueDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editTolerance">Width Tolerance (MM)</Label>
+                <Input
+                  id="editTolerance"
+                  type="number"
+                  step="0.5"
+                  value={editingOrder.widthTolerance === 0 ? "" : editingOrder.widthTolerance.toString()}
+                  onChange={(e) =>
+                    setEditingOrder({
+                      ...editingOrder,
+                      widthTolerance: e.target.value === "" ? 0 : Number.parseFloat(e.target.value) || 0,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
